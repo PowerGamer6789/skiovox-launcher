@@ -2,116 +2,49 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Security Notice</title>
+<title>Launch SkioVox</title>
 <style>
-  body {
-    margin: 0;
-    background: #0c0c0c;
-    color: #e6e6e6;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-  }
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #0d0d0d;
+        font-family: 'Courier New', Courier, monospace;
+        color: #00ffcc;
+    }
 
-  .container {
-    max-width: 720px;
-    border: 1px solid #2a2a2a;
-    padding: 32px;
-    background: #111;
-    box-shadow: 0 0 40px rgba(0,0,0,0.7);
-  }
+    .launch-button {
+        padding: 20px 50px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #00ffcc;
+        background: none;
+        border: 2px solid #00ffcc;
+        border-radius: 8px;
+        cursor: pointer;
+        text-transform: uppercase;
+        box-shadow: 0 0 15px #00ffcc, 0 0 30px #00ffcc inset;
+        transition: all 0.2s ease-in-out;
+    }
 
-  h1 {
-    color: #ff5555;
-    margin-top: 0;
-    font-size: 1.6em;
-    letter-spacing: 0.5px;
-  }
+    .launch-button:hover {
+        box-shadow: 0 0 25px #00ffcc, 0 0 50px #00ffcc inset;
+        transform: scale(1.1);
+    }
 
-  p {
-    line-height: 1.5;
-    font-size: 1.05em;
-  }
-
-  .status {
-    margin-top: 20px;
-    font-family: monospace;
-    color: #00ff9c;
-    min-height: 24px;
-  }
-
-  .footer {
-    margin-top: 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.85em;
-  }
-
-  .continue a {
-    color: #aaa;
-    text-decoration: none;
-  }
-
-  .continue a:hover {
-    text-decoration: underline;
-    color: #ddd;
-  }
-
-  .note {
-    color: #888;
-  }
+    .launch-button:active {
+        transform: scale(0.95);
+        box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc inset;
+    }
 </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Security Verification In Progress</h1>
 
-    <p>
-      This connection has been flagged for review due to unusual network behavior.
-      Continued use of this website may violate acceptable use policies.
-    </p>
+<button class="launch-button" onclick="window.open('javascript:alert();')">
+    LAUNCH SKIOVOX
+</button>
 
-    <div class="status" id="status">
-      Initializing security checks…
-    </div>
-
-    <p class="note">
-      Network metadata may be analyzed to ensure compliance.
-    </p>
-
-    <div class="footer">
-      <span class="note">Ref ID: SV‑4921</span>
-      <span class="continue">
-        <a href="https://c.notebook.baumgardner.us">Continue anyway</a>
-      </span>
-    </div>
-  </div>
-
-<script>
-  const status = document.getElementById("status");
-  const steps = [
-    "Validating connection integrity…",
-    "Inspecting TLS handshake…",
-    "Reviewing request headers…",
-    "Analyzing traffic patterns…",
-    "Cross‑checking access behavior…",
-    "Serializing session metadata…",
-    "Packaging data to JSON…",
-    "Transmitting report to roundrockisd.org…",
-    "Verification complete."
-  ];
-
-
-  let i = 0;
-  setInterval(() => {
-    if (i < steps.length) {
-      status.textContent = steps[i];
-      i++;
-    }
-  }, 1200);
-</script>
 </body>
 </html>
