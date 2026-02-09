@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helper</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --accent: #38bdf8;
+            --border: #334155;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .dashboard {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            width: 350px;
+            border: 1px solid var(--border);
+        }
+
+        #clock {
+            font-size: 3.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            letter-spacing: -2px;
+        }
+
+        #full-date {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+        }
+
+        .info-group {
+            border-top: 1px solid var(--border);
+            padding: 15px 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .label { color: #94a3b8; }
+        .value { font-weight: 600; text-align: right; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        button {
+            background: var(--border);
+            color: var(--text-main);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        button:hover { background: var(--accent); color: var(--bg-color); }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div id="clock">00:00:00</div>
+    <div id="full-date">LOADING...</div>
+    
+    <div class="info-group">
+        <div class="info-row">
+            <span class="label">Power</span>
+            <span class="value" id="bat-level">--%</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Status</span>
+            <span class="value" id="bat-status">--</span>
+        </div>
+    </div>
+
+    <div class="info-group">
+        <div class="info-row">
+            <span class="label">Audio Out</span>
+            <span class="value" id="audio-device">Detecting...</span>
+        </div>
+        <div style="text-align: right;">
+            <button onclick="getAudioOutput()">Sync Audio</button>
+        </div>
+    </div>
+
+    <div class="info-group">
+        <div class="info-row">
+            <span class="label">Network</span>
+            <span class="value" id="net-status">Checking...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Helper Logger ---
+    function logHelper(msg, isError = false) {
+        const timestamp = new Date().toLocaleTimeString();
+        const prefix = `[Skiovox Helper ${timestamp}]`;
+        if (isError) {
+            console.error(`${prefix} ❌ ERROR:`, msg);
+        } else {
+            console.log(`${prefix} ✅:`, msg);
+        }
+    }
+
+    // --- Clock Logic ---
+    function updateClock() {
+        try {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('full-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            setTimeout(updateClock, 1000);
+        } catch (e) {
+            logHelper(`Clock Update failed: ${e.message}`, true);
+        }
+    }
+
+    // --- Battery Logic ---
+    if ('getBattery' in navigator) {
+        navigator.getBattery()
+            .then(battery => {
+                logHelper("Battery API initialized");
+                const updateBattery = () => {
+                    document.getElementById('bat-level').textContent = `${Math.round(battery.level * 100)}%`;
+                    document.getElementById('bat-status').textContent = battery.charging ? "Charging" : "Discharging";
+                    logHelper(`Battery updated: ${Math.round(battery.level * 100)}%`);
+                };
+                updateBattery();
+                battery.onlevelchange = updateBattery;
+                battery.onchargingchange = updateBattery;
+            })
+            .catch(e => {
+                logHelper(`Battery API blocked or failed: ${e.message}`, true);
+                document.getElementById('bat-level').textContent = "Blocked";
+            });
+    } else {
+        logHelper("Battery API not supported in this browser", true);
+    }
+
+    // --- Audio Logic ---
+    async function getAudioOutput() {
+        try {
+            logHelper("Attempting to fetch audio devices...");
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioOut = devices.filter(device => device.kind === 'audiooutput');
+            
+            // Check if labels are empty (usually means mic permission is missing)
+            if (audioOut.length > 0 && audioOut[0].label === "") {
+                logHelper("Device labels are empty. Check Mic permissions at chrome://settings/content/siteDetails?site=" + encodeURIComponent(window.location.href), true);
+            }
+
+            const active = audioOut.find(d => d.deviceId === 'default') || audioOut[0];
+            
+            if (active && active.label) {
+                const cleanLabel = active.label.replace(/^Default - /i, '');
+                document.getElementById('audio-device').textContent = cleanLabel;
+                logHelper(`Audio device identified: ${cleanLabel}`);
+            } else {
+                document.getElementById('audio-device').textContent = "Generic Device";
+                logHelper("No specific audio labels found.");
+            }
+        } catch (err) {
+            logHelper(`Audio Detection Error: ${err.message}`, true);
+            document.getElementById('audio-device').textContent = "Error (Check Console)";
+        }
+    }
+
+    // --- Network Health ---
+    function updateNet() {
+        const status = navigator.onLine ? "Online" : "OFFLINE";
+        const el = document.getElementById('net-status');
+        el.textContent = status;
+        el.style.color = navigator.onLine ? "var(--accent)" : "var(--danger)";
+        logHelper(`Network status changed: ${status}`);
+    }
+
+    // --- Global Error Catch ---
+    window.onerror = function(message, source, lineno, colno, error) {
+        logHelper(`${message} at line ${lineno}`, true);
+        return false;
+    };
+
+    // Initialize
+    updateClock();
+    getAudioOutput();
+    updateNet();
+    
+    window.addEventListener('online', updateNet);
+    window.addEventListener('offline', updateNet);
+    navigator.mediaDevices.ondevicechange = getAudioOutput;
+    document.body.addEventListener('click', () => {
+        logHelper("User interaction detected, refreshing labels...");
+        getAudioOutput();
+    }, { once: true });
+
+</script>
+
+</body>
+</html>
